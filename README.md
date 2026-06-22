@@ -62,12 +62,7 @@ $$
 Realized volatility is estimated over a rolling window of length `w`:
 
 $$
-\sigma_t =
-\sqrt{252}
-\operatorname{Std}
-\left(
-r_{t-w+1}, \ldots, r_t
-\right)
+\sigma_t = \sqrt{252} \cdot \mathrm{std}(r_{t-w+1}, \ldots, r_t)
 $$
 
 Each trading day is then classified into one of four observable regimes using the sign of the log-return and whether realized volatility is above or below its threshold.
@@ -82,25 +77,13 @@ Each trading day is then classified into one of four observable regimes using th
 The sequence of regimes is modeled as a finite-state Markov chain. The transition probability from regime `i` to regime `j` is:
 
 $$
-p_{ij}
-======
-
-\mathbb{P}
-\left(
-X_{t+1}=j
-\mid
-X_t=i
-\right)
+p_{ij} = P(X_{t+1}=j \mid X_t=i)
 $$
 
 Given the observed regime sequence, the transition matrix is estimated by maximum likelihood:
 
 $$
-\widehat{p}_{ij}
-================
-
-\frac{N_{ij}}
-{\sum_{k=1}^{4} N_{ik}}
+\hat{p}*{ij} = \frac{N*{ij}}{\sum_{k=1}^{4} N_{ik}}
 $$
 
 where `N_ij` is the number of observed transitions from regime `i` to regime `j`.
