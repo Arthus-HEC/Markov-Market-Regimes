@@ -140,13 +140,7 @@ This figure compares the drawdowns of the benchmark and the regime-based strateg
 
 ## Backtesting Discipline
 
-To avoid look-ahead bias, the allocation for day ( t ) is based only on the regime observed at day ( t-1 ):
-
-```math
-a_t = g(X_{t-1}),
-```
-
-where ( a_t \in [0,1] ) is the portfolio exposure to the risky asset.
+To avoid look-ahead bias, the allocation for day `t` is based only on the regime observed at day `t-1`.
 
 The baseline allocation rule is:
 
@@ -176,13 +170,13 @@ The objective is not only to maximize raw return. A regime-based strategy may st
 
 ## Latest Backtest Results
 
-The following table should be updated after running the notebook.
+| Strategy            | Total Return |   CAGR | Annualized Volatility | Sharpe Ratio | Max Drawdown | Total Turnover |
+| ------------------- | -----------: | -----: | --------------------: | -----------: | -----------: | -------------: |
+| Buy and Hold        |      803.80% | 14.41% |                17.17% |         0.79 |      -33.72% |             -- |
+| Regime Strategy     |      154.82% |  5.89% |                 9.54% |         0.60 |      -22.07% |        1323.75 |
+| Regime Strategy Net |       31.46% |  1.69% |                 9.55% |         0.18 |      -23.82% |        1323.75 |
 
-| Strategy            | Total Return | CAGR | Annualized Volatility | Sharpe Ratio | Max Drawdown | Total Turnover |
-| ------------------- | -----------: | ---: | --------------------: | -----------: | -----------: | -------------: |
-| Buy and Hold        |           -- |   -- |                    -- |           -- |           -- |             -- |
-| Regime Strategy     |           -- |   -- |                    -- |           -- |           -- |             -- |
-| Regime Strategy Net |           -- |   -- |                    -- |           -- |           -- |             -- |
+The regime-based strategy reduces annualized volatility and maximum drawdown relative to buy-and-hold, but it also gives up a large part of the upside. Once transaction costs are included, performance deteriorates significantly because the allocation rule generates high turnover. This highlights an important practical point: regime information may help manage downside risk, but the allocation rule must be designed carefully to avoid excessive trading costs.
 
 ## Markov Chain Summary
 
@@ -190,10 +184,10 @@ The fitted Markov chain can be summarized using persistence, expected duration, 
 
 | Regime               | Persistence | Expected Duration | Stationary Probability | Outgoing Transitions |
 | -------------------- | ----------: | ----------------: | ---------------------: | -------------------: |
-| Bull Low Volatility  |          -- |                -- |                     -- |                   -- |
-| Bull High Volatility |          -- |                -- |                     -- |                   -- |
-| Bear Low Volatility  |          -- |                -- |                     -- |                   -- |
-| Bear High Volatility |          -- |                -- |                     -- |                   -- |
+| Bull Low Volatility  |      0.5398 |              2.17 |                 0.2832 |                 1167 |
+| Bull High Volatility |      0.5244 |              2.10 |                 0.2733 |                 1127 |
+| Bear Low Volatility  |      0.4076 |              1.69 |                 0.2167 |                  893 |
+| Bear High Volatility |      0.4244 |              1.74 |                 0.2267 |                  933 |
 
 ## Project Structure
 
