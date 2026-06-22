@@ -6,7 +6,7 @@ A transparent quantitative finance project using discrete-time Markov chains to 
 
 Financial markets rarely behave homogeneously over time. Periods of calm upward trends, high volatility, drawdowns, and stress episodes tend to alternate. This project builds a simple and interpretable framework to study such market regimes using Markov chains.
 
-The goal is not to predict asset prices directly. Instead, the project investigates whether observable market conditions exhibit enough persistence to be useful for risk-aware portfolio allocation.
+The objective is not to predict asset prices directly. Instead, the project investigates whether observable market conditions exhibit enough persistence to support risk-aware portfolio allocation.
 
 Starting from historical asset prices, the project:
 
@@ -18,6 +18,20 @@ Starting from historical asset prices, the project:
 6. backtests a simple regime-based allocation strategy against buy-and-hold.
 
 This project is designed as a clean baseline before moving to more advanced models such as rolling transition matrices, clustering-based regimes, Markov regime-switching models, or Hidden Markov Models.
+
+## Why This Project?
+
+This project connects several core skills used in quantitative finance:
+
+* probability and Markov chains;
+* financial time series analysis;
+* volatility estimation;
+* maximum likelihood estimation;
+* backtesting discipline;
+* portfolio risk management;
+* Python implementation and reproducible research.
+
+The methodology is deliberately simple and interpretable. The goal is to build a robust baseline rather than a black-box trading model.
 
 ## Regime Definition
 
@@ -35,9 +49,9 @@ The four regimes are:
 |     3 | Bear Low Volatility  | Negative return, low realized volatility  |
 |     4 | Bear High Volatility | Negative return, high realized volatility |
 
-The classification is intentionally simple. It is meant to provide an interpretable baseline rather than a fully data-driven regime discovery model.
+The classification is intentionally simple. It provides an interpretable baseline rather than a fully data-driven regime discovery model.
 
-## Mathematical Framework
+## Methodology
 
 Let ( P_t ) denote the price of an asset at date ( t ). The daily log-return is defined as:
 
@@ -81,68 +95,11 @@ Given an observed path of regimes, the transition probabilities are estimated by
 
 where ( N_{ij} ) is the number of observed transitions from regime ( i ) to regime ( j ).
 
-## Project Structure
+## Empirical Pipeline
 
-```text
-markov-market-regimes/
-│
-├── README.md
-├── requirements.txt
-├── .gitignore
-│
-├── report/
-│   ├── markov_market_regimes.pdf
-│   └── markov_market_regimes.tex
-│
-├── notebooks/
-│   └── 01_markov_market_regimes.ipynb
-│
-├── src/
-│   ├── data.py
-│   ├── features.py
-│   ├── regimes.py
-│   ├── markov.py
-│   ├── backtest.py
-│   └── plots.py
-│
-├── figures/
-│   └── .gitkeep
-│
-└── data/
-    └── .gitkeep
-```
+The empirical workflow is:
 
-## Expected Outputs
-
-The final implementation will generate:
-
-* a time series of market regimes;
-* a transition matrix between regimes;
-* a heatmap of transition probabilities;
-* estimated regime persistence;
-* expected regime durations;
-* an estimated stationary distribution;
-* a comparison between buy-and-hold and regime-based allocation;
-* performance metrics such as annualized return, volatility, Sharpe ratio, maximum drawdown, and turnover.
-
-## Example Figures
-
-The repository will include the following figures once the empirical implementation is completed:
-
-```text
-figures/
-├── regimes_over_time.png
-├── volatility_threshold.png
-├── transition_matrix_heatmap.png
-├── strategy_vs_benchmark.png
-└── drawdown_comparison.png
-```
-
-## Methodology
-
-The empirical pipeline is:
-
-1. Download daily adjusted close prices for a liquid asset or index.
+1. Download daily adjusted close prices.
 2. Compute daily log-returns.
 3. Estimate rolling realized volatility.
 4. Define high-volatility and low-volatility regimes.
@@ -154,6 +111,38 @@ The empirical pipeline is:
 10. Backtest the strategy against a buy-and-hold benchmark.
 11. Evaluate the results using standard performance metrics.
 
+## Figures
+
+### Asset Price with Regime Classification
+
+This figure displays the historical asset price and highlights each observation according to its estimated market regime.
+
+![Asset price with regime classification](figures/regimes_over_time.png)
+
+### Realized Volatility and Threshold
+
+This figure shows the rolling annualized realized volatility and the threshold used to separate low-volatility and high-volatility regimes.
+
+![Realized volatility and threshold](figures/volatility_threshold.png)
+
+### Estimated Transition Matrix
+
+The transition matrix summarizes the conditional dynamics of market regimes. Diagonal coefficients measure regime persistence.
+
+![Transition matrix heatmap](figures/transition_matrix_heatmap.png)
+
+### Cumulative Performance
+
+The regime-based allocation strategy is compared to a buy-and-hold benchmark.
+
+![Cumulative performance](figures/strategy_vs_benchmark.png)
+
+### Drawdown Comparison
+
+This figure compares the drawdowns of the benchmark and the regime-based strategy.
+
+![Drawdown comparison](figures/drawdown_comparison.png)
+
 ## Backtesting Discipline
 
 To avoid look-ahead bias, the allocation for day ( t ) is based only on the regime observed at day ( t-1 ):
@@ -164,7 +153,7 @@ a_t = g(X_{t-1}),
 
 where ( a_t \in [0,1] ) is the portfolio exposure to the risky asset.
 
-A simple baseline allocation rule is:
+The baseline allocation rule is:
 
 | Previous regime      | Allocation |
 | -------------------- | ---------: |
@@ -179,14 +168,72 @@ This rule is heuristic. Its purpose is to test whether reducing exposure during 
 
 The strategy is evaluated using:
 
-* annualized return;
+* total return;
+* compound annual growth rate;
+* annualized log-return;
 * annualized volatility;
 * Sharpe ratio;
 * maximum drawdown;
-* turnover;
-* cumulative performance against buy-and-hold.
+* total turnover;
+* average turnover.
 
 The objective is not only to maximize raw return. A regime-based strategy may still be useful if it reduces drawdowns or improves risk-adjusted performance.
+
+## Latest Backtest Results
+
+The following table should be updated after running the notebook.
+
+| Strategy            | Total Return | CAGR | Annualized Volatility | Sharpe Ratio | Max Drawdown | Total Turnover |
+| ------------------- | -----------: | ---: | --------------------: | -----------: | -----------: | -------------: |
+| Buy and Hold        |           -- |   -- |                    -- |           -- |           -- |             -- |
+| Regime Strategy     |           -- |   -- |                    -- |           -- |           -- |             -- |
+| Regime Strategy Net |           -- |   -- |                    -- |           -- |           -- |             -- |
+
+## Markov Chain Summary
+
+The fitted Markov chain can be summarized using persistence, expected duration, stationary probability, and the number of outgoing transitions observed in the sample.
+
+| Regime               | Persistence | Expected Duration | Stationary Probability | Outgoing Transitions |
+| -------------------- | ----------: | ----------------: | ---------------------: | -------------------: |
+| Bull Low Volatility  |          -- |                -- |                     -- |                   -- |
+| Bull High Volatility |          -- |                -- |                     -- |                   -- |
+| Bear Low Volatility  |          -- |                -- |                     -- |                   -- |
+| Bear High Volatility |          -- |                -- |                     -- |                   -- |
+
+## Project Structure
+
+```text
+markov-market-regimes/
+|
+|-- README.md
+|-- requirements.txt
+|-- .gitignore
+|
+|-- report/
+|   |-- markov_market_regimes.pdf
+|   |-- markov_market_regimes.tex
+|
+|-- notebooks/
+|   |-- 01_markov_market_regimes.ipynb
+|
+|-- src/
+|   |-- data.py
+|   |-- features.py
+|   |-- regimes.py
+|   |-- markov.py
+|   |-- backtest.py
+|   |-- plots.py
+|
+|-- figures/
+|   |-- regimes_over_time.png
+|   |-- volatility_threshold.png
+|   |-- transition_matrix_heatmap.png
+|   |-- strategy_vs_benchmark.png
+|   |-- drawdown_comparison.png
+|
+|-- data/
+|   |-- .gitkeep
+```
 
 ## Installation
 
@@ -217,17 +264,31 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-## Dependencies
+## Running the Project
 
-The project uses:
+First, download and save the price data:
 
-* `numpy`
-* `pandas`
-* `matplotlib`
-* `seaborn`
-* `yfinance`
-* `scipy`
-* `jupyter`
+```bash
+python src/data.py
+```
+
+Then run the individual modules:
+
+```bash
+python src/features.py
+python src/regimes.py
+python src/markov.py
+python src/backtest.py
+python src/plots.py
+```
+
+Alternatively, run the full notebook:
+
+```bash
+jupyter notebook notebooks/01_markov_market_regimes.ipynb
+```
+
+The generated figures are saved in the `figures/` folder.
 
 ## Report
 
@@ -243,7 +304,8 @@ This project is intentionally simple and interpretable. Natural extensions inclu
 * using clustering to define regimes;
 * implementing Hidden Markov Models;
 * estimating regime-conditional expected returns and variances;
-* deriving allocation rules from a mean-variance or utility maximization problem.
+* deriving allocation rules from a mean-variance or utility maximization problem;
+* adding more realistic transaction costs, slippage, and cash returns.
 
 ## Disclaimer
 
