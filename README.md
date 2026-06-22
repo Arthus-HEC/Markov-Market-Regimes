@@ -53,29 +53,13 @@ The classification is intentionally simple. It provides an interpretable baselin
 
 ## Methodology
 
-The project starts from a daily price series for a liquid financial asset. The objective is to transform this continuous price series into a discrete sequence of interpretable market regimes, and then to study the dynamics of these regimes with a Markov chain.
-
-### 1. Log-returns
-
-Let the asset price at date `t` be denoted by:
-
-$$
-P_t
-$$
-
-The daily log-return is defined as:
+The project starts from a daily price series. Let `P_t` denote the asset price at date `t`. The daily log-return is defined as:
 
 $$
 r_t = \log\left(\frac{P_t}{P_{t-1}}\right)
 $$
 
-Log-returns are used because they are additive over time and are standard in financial time series analysis.
-
-### 2. Realized volatility
-
-To capture the intensity of recent price fluctuations, the project computes rolling realized volatility over a window of `w` trading days.
-
-The annualized realized volatility at date `t` is:
+Realized volatility is estimated over a rolling window of length `w`:
 
 $$
 \sigma_t =
@@ -86,54 +70,16 @@ r_{t-w+1}, \ldots, r_t
 \right)
 $$
 
-The factor `252` corresponds to the approximate number of trading days in a year.
+Each trading day is then classified into one of four observable regimes using the sign of the log-return and whether realized volatility is above or below its threshold.
 
-Importantly, realized volatility at date `t` only uses returns observed up to date `t`. This avoids look-ahead bias.
+| State | Regime               | Definition                       |
+| ----: | -------------------- | -------------------------------- |
+|     1 | Bull Low Volatility  | Positive return, low volatility  |
+|     2 | Bull High Volatility | Positive return, high volatility |
+|     3 | Bear Low Volatility  | Negative return, low volatility  |
+|     4 | Bear High Volatility | Negative return, high volatility |
 
-### 3. Observable regime classification
-
-Each trading day is classified using two pieces of information:
-
-* whether the daily return is positive or negative;
-* whether realized volatility is below or above a chosen threshold.
-
-The volatility threshold is taken as the median realized volatility in the baseline implementation.
-
-This gives four observable regimes:
-
-| State | Regime               | Definition                          |
-| ----: | -------------------- | ----------------------------------- |
-|     1 | Bull Low Volatility  | Positive return and low volatility  |
-|     2 | Bull High Volatility | Positive return and high volatility |
-|     3 | Bear Low Volatility  | Negative return and low volatility  |
-|     4 | Bear High Volatility | Negative return and high volatility |
-
-This classification is deliberately simple. The goal is not to discover hidden regimes, but to build an interpretable baseline.
-
-### 4. Markov chain model
-
-Once each day has been assigned a regime, the sequence of regimes is modeled as a finite-state Markov chain.
-
-The Markov assumption means that tomorrow’s regime depends on today’s regime, but not directly on the full past history:
-
-$$
-\mathbb{P}
-\left(
-X_{t+1}=j
-\mid
-X_t=i, X_{t-1}, \ldots
-\right)
-=======
-
-\mathbb{P}
-\left(
-X_{t+1}=j
-\mid
-X_t=i
-\right)
-$$
-
-The transition probability from regime `i` to regime `j` is denoted by:
+The sequence of regimes is modeled as a finite-state Markov chain. The transition probability from regime `i` to regime `j` is:
 
 $$
 p_{ij}
@@ -147,27 +93,7 @@ X_t=i
 \right)
 $$
 
-The transition matrix is therefore:
-
-$$
-P =
-\begin{pmatrix}
-p_{11} & p_{12} & p_{13} & p_{14} \
-p_{21} & p_{22} & p_{23} & p_{24} \
-p_{31} & p_{32} & p_{33} & p_{34} \
-p_{41} & p_{42} & p_{43} & p_{44}
-\end{pmatrix}
-$$
-
-Each row sums to one, because each row is a conditional probability distribution.
-
-### 5. Estimating transition probabilities
-
-The transition matrix is estimated from the observed regime sequence.
-
-Let `N_ij` be the number of observed transitions from regime `i` to regime `j`.
-
-The maximum likelihood estimator of the transition probability is:
+Given the observed regime sequence, the transition matrix is estimated by maximum likelihood:
 
 $$
 \widehat{p}_{ij}
@@ -177,65 +103,9 @@ $$
 {\sum_{k=1}^{4} N_{ik}}
 $$
 
-In words, the estimated probability of moving from regime `i` to regime `j` is the number of observed transitions from `i` to `j`, divided by the total number of transitions leaving regime `i`.
+where `N_ij` is the number of observed transitions from regime `i` to regime `j`.
 
-### 6. Regime persistence
-
-The diagonal entries of the transition matrix measure regime persistence.
-
-For example, a high value of:
-
-$$
-\widehat{p}_{44}
-$$
-
-means that the `Bear High Volatility` regime tends to persist from one day to the next.
-
-The expected duration of regime `i` is estimated by:
-
-$$
-\mathbb{E}[D_i]
-===============
-
-\frac{1}{1-\widehat{p}_{ii}}
-$$
-
-This gives an intuitive measure of how long each regime tends to last.
-
-### 7. Stationary distribution
-
-The stationary distribution describes the long-run regime frequencies implied by the estimated Markov chain.
-
-It is the probability vector satisfying:
-
-$$
-\pi P = \pi
-$$
-
-with:
-
-$$
-\sum_{i=1}^{4} \pi_i = 1
-$$
-
-In this project, the stationary distribution is interpreted cautiously. It describes the fitted Markov model, but it should not be viewed as a permanent forecast of market behavior.
-
-### 8. Regime-based allocation
-
-Finally, the project tests whether regime information can support a simple dynamic allocation strategy.
-
-To avoid look-ahead bias, the allocation for day `t` uses only the regime observed at day `t-1`.
-
-The allocation rule is:
-
-| Previous regime      | Allocation |
-| -------------------- | ---------: |
-| Bull Low Volatility  |       100% |
-| Bull High Volatility |        75% |
-| Bear Low Volatility  |        50% |
-| Bear High Volatility |         0% |
-
-The objective is not necessarily to beat buy-and-hold in raw return. The goal is to test whether reducing exposure during unfavorable regimes can improve risk-adjusted performance or reduce drawdowns.
+The estimated transition matrix is then used to study regime persistence, expected regime durations, stationary probabilities, and a simple regime-based allocation strategy.
 
 ## Empirical Pipeline
 
