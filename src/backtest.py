@@ -24,13 +24,12 @@ from features import build_feature_dataframe, validate_feature_dataframe
 from regimes import classify_market_regimes, validate_regime_dataframe
 
 
-DEFAULT_ALLOCATION_RULE: Dict[int, float] = {
-    1: 1.00,
-    2: 0.75,
-    3: 0.50,
-    4: 0.00,
+DEFAULT_ALLOCATION_RULE = {
+    1: 1.00,  # Bull Low Volatility
+    2: 0.75,  # Bull High Volatility
+    3: 0.75,  # Bear Low Volatility
+    4: 0.50,  # Bear High Volatility
 }
-
 
 def validate_allocation_rule(
     allocation_rule: Dict[int, float],
@@ -513,7 +512,7 @@ def format_performance_table(
 if __name__ == "__main__":
     from data import load_price_data_from_csv, validate_price_data
 
-    prices = load_price_data_from_csv("data/spy_prices.csv")
+    prices = load_price_data_from_csv("data/btc_usd_prices.csv")
     validate_price_data(prices)
 
     features = build_feature_dataframe(

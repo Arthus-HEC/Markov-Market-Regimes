@@ -1,6 +1,6 @@
 # Market Regime Detection with Markov Chains
 
-A transparent quantitative finance project using discrete-time Markov chains to classify market regimes, estimate regime transition probabilities, and test whether regime persistence can support a simple dynamic allocation strategy.
+A transparent quantitative finance project using discrete-time Markov chains to classify market regimes, estimate regime transition probabilities, and test whether regime persistence can support a simple dynamic risk-management overlay.
 
 ## Overview
 
@@ -8,14 +8,16 @@ Financial markets rarely behave homogeneously over time. Periods of calm upward 
 
 The objective is not to predict asset prices directly. Instead, the project investigates whether observable market conditions exhibit enough persistence to support risk-aware portfolio allocation.
 
-Starting from historical asset prices, the project:
+The main empirical application uses **BTC-USD daily prices starting in 2015**. BTC-USD is intentionally more volatile than a broad equity index such as SPY, which makes it a useful test case for a regime-based risk overlay.
+
+Starting from historical prices, the project:
 
 1. computes daily log-returns;
 2. estimates rolling realized volatility;
 3. classifies each trading day into an observable market regime;
 4. estimates the transition matrix of the resulting Markov chain;
 5. studies regime persistence, stationary probabilities, and expected regime durations;
-6. backtests a simple regime-based allocation strategy against buy-and-hold.
+6. backtests a volatility-targeting allocation rule against buy-and-hold.
 
 This project is designed as a clean baseline before moving to more advanced models such as rolling transition matrices, clustering-based regimes, Markov regime-switching models, or Hidden Markov Models.
 
@@ -65,14 +67,19 @@ $$
 \sigma_t = \sqrt{252} \cdot \mathrm{std}(r_{t-w+1}, \ldots, r_t)
 $$
 
+In the main analysis, the rolling window is:
+
+$$
+w = 20
+$$
+
 Each trading day is then classified into one of four observable regimes using the sign of the log-return and whether realized volatility is above or below its threshold.
 
-| State | Regime               | Definition                       |
-| ----: | -------------------- | -------------------------------- |
-|     1 | Bull Low Volatility  | Positive return, low volatility  |
-|     2 | Bull High Volatility | Positive return, high volatility |
-|     3 | Bear Low Volatility  | Negative return, low volatility  |
-|     4 | Bear High Volatility | Negative return, high volatility |
+The volatility threshold is the median realized volatility in the sample. For BTC-USD, the estimated threshold is:
+
+$$
+c = 0.4401
+$$
 
 The sequence of regimes is modeled as a finite-state Markov chain. The transition probability from regime `i` to regime `j` is:
 
@@ -83,7 +90,7 @@ $$
 Given the observed regime sequence, the transition matrix is estimated by maximum likelihood:
 
 $$
-\hat{p}*{ij} = \frac{N*{ij}}{\sum_{k=1}^{4} N_{ik}}
+\hat{p}_{ij} = \frac{N_{ij}}{\sum_{k=1}^{4} N_{ik}}
 $$
 
 where `N_ij` is the number of observed transitions from regime `i` to regime `j`.
@@ -94,7 +101,7 @@ The estimated transition matrix is then used to study regime persistence, expect
 
 The empirical workflow is:
 
-1. Download daily adjusted close prices.
+1. Download daily BTC-USD adjusted close prices.
 2. Compute daily log-returns.
 3. Estimate rolling realized volatility.
 4. Define high-volatility and low-volatility regimes.
@@ -110,7 +117,7 @@ The empirical workflow is:
 
 ### Asset Price with Regime Classification
 
-This figure displays the historical asset price and highlights each observation according to its estimated market regime.
+This figure displays the BTC-USD historical price and highlights each observation according to its estimated market regime.
 
 ![Asset price with regime classification](figures/regimes_over_time.png)
 
@@ -128,7 +135,7 @@ The transition matrix summarizes the conditional dynamics of market regimes. Dia
 
 ### Cumulative Performance
 
-The regime-based allocation strategy is compared to a buy-and-hold benchmark.
+The volatility-targeting regime strategy is compared to a buy-and-hold benchmark.
 
 ![Cumulative performance](figures/strategy_vs_benchmark.png)
 
@@ -142,16 +149,16 @@ This figure compares the drawdowns of the benchmark and the regime-based strateg
 
 To avoid look-ahead bias, the allocation for day `t` is based only on the regime observed at day `t-1`.
 
-The baseline allocation rule is:
+The allocation rule used in the main BTC-USD analysis is a simple volatility-targeting rule:
 
 | Previous regime      | Allocation |
 | -------------------- | ---------: |
 | Bull Low Volatility  |       100% |
 | Bull High Volatility |        75% |
-| Bear Low Volatility  |        50% |
-| Bear High Volatility |         0% |
+| Bear Low Volatility  |        75% |
+| Bear High Volatility |        50% |
 
-This rule is heuristic. Its purpose is to test whether reducing exposure during unfavorable regimes can improve risk-adjusted performance or reduce drawdowns.
+This rule does not fully exit the market. Instead, it gradually reduces exposure when the regime becomes more volatile or more defensive. The purpose is to test whether regime information can be used as a risk-management overlay while preserving meaningful upside exposure.
 
 ## Performance Metrics
 
@@ -166,17 +173,25 @@ The strategy is evaluated using:
 * total turnover;
 * average turnover.
 
-The objective is not only to maximize raw return. A regime-based strategy may still be useful if it reduces drawdowns or improves risk-adjusted performance.
+The objective is not only to maximize raw return. A regime-based strategy may still be useful if it reduces drawdowns or improves the risk profile of the portfolio.
 
 ## Latest Backtest Results
 
+The table below compares buy-and-hold with the regime-based strategy, before and after transaction costs.
+
+Transaction costs are set to 5 basis points.
+
 | Strategy            | Total Return |   CAGR | Annualized Volatility | Sharpe Ratio | Max Drawdown | Total Turnover |
 | ------------------- | -----------: | -----: | --------------------: | -----------: | -----------: | -------------: |
-| Buy and Hold        |      803.80% | 14.41% |                17.17% |         0.79 |      -33.72% |             -- |
-| Regime Strategy     |      154.82% |  5.89% |                 9.54% |         0.60 |      -22.07% |        1323.75 |
-| Regime Strategy Net |       31.46% |  1.69% |                 9.55% |         0.18 |      -23.82% |        1323.75 |
+| Buy and Hold        |    27631.97% | 40.46% |                55.10% |         0.62 |      -83.40% |             -- |
+| Regime Strategy     |     5632.05% | 27.70% |                39.52% |         0.62 |      -71.68% |         562.50 |
+| Regime Strategy Net |     4226.78% | 25.55% |                39.52% |         0.58 |      -72.51% |         562.50 |
 
-The regime-based strategy reduces annualized volatility and maximum drawdown relative to buy-and-hold, but it also gives up a large part of the upside. Once transaction costs are included, performance deteriorates significantly because the allocation rule generates high turnover. This highlights an important practical point: regime information may help manage downside risk, but the allocation rule must be designed carefully to avoid excessive trading costs.
+The regime-based strategy does not outperform buy-and-hold in raw returns. This is expected for BTC-USD over a strongly upward sample period: remaining fully invested captures the full upside of the asset.
+
+However, the regime-based strategy provides a meaningful risk overlay. Compared with buy-and-hold, the net strategy reduces annualized volatility from approximately 55.10% to 39.52% and improves maximum drawdown from approximately -83.40% to -72.51%, while still preserving a high net CAGR of 25.55%.
+
+This suggests that the Markov regime framework is more useful as a risk-management overlay than as a pure return-enhancement strategy.
 
 ## Markov Chain Summary
 
@@ -184,10 +199,57 @@ The fitted Markov chain can be summarized using persistence, expected duration, 
 
 | Regime               | Persistence | Expected Duration | Stationary Probability | Outgoing Transitions |
 | -------------------- | ----------: | ----------------: | ---------------------: | -------------------: |
-| Bull Low Volatility  |      0.5398 |              2.17 |                 0.2832 |                 1167 |
-| Bull High Volatility |      0.5244 |              2.10 |                 0.2733 |                 1127 |
-| Bear Low Volatility  |      0.4076 |              1.69 |                 0.2167 |                  893 |
-| Bear High Volatility |      0.4244 |              1.74 |                 0.2267 |                  933 |
+| Bull Low Volatility  |      0.4949 |              1.98 |                 0.2620 |                 1087 |
+| Bull High Volatility |      0.4778 |              1.92 |                 0.2632 |                 1105 |
+| Bear Low Volatility  |      0.4479 |              1.81 |                 0.2408 |                  998 |
+| Bear High Volatility |      0.4139 |              1.71 |                 0.2339 |                  981 |
+
+The diagonal terms are below 0.50, which means that regimes are persistent, but not extremely long-lasting at the daily frequency.
+
+The first-order Markov model also fits the observed regime sequence better than an independent-regime benchmark:
+
+| Model | Log-Likelihood |
+| ----- | -------------: |
+| Markov model | -3578.66 |
+| Independent benchmark | -5776.75 |
+
+The likelihood ratio statistic is:
+
+$$
+LR = 4396.17
+$$
+
+This indicates that conditioning on the current regime substantially improves the fit relative to an independent-regime model.
+
+## Multi-Asset Screening
+
+Before selecting BTC-USD as the main case study, the framework was tested across several assets and allocation rules.
+
+The screened assets included:
+
+| Ticker | Asset |
+| ------ | ----- |
+| SPY | S&P 500 ETF |
+| QQQ | Nasdaq 100 ETF |
+| IWM | Russell 2000 ETF |
+| EEM | Emerging Markets ETF |
+| TLT | Long-Term US Treasuries ETF |
+| GLD | Gold ETF |
+| BTC-USD | Bitcoin |
+| ARKK | Innovation / growth ETF |
+| XLE | Energy sector ETF |
+| XLF | Financial sector ETF |
+
+Several allocation rules were tested:
+
+| Rule | Description |
+| ---- | ----------- |
+| Baseline | Reduces exposure aggressively in bear regimes |
+| Crash filter | Exits only in Bear High Volatility |
+| Defensive overlay | Gradually reduces exposure in defensive regimes |
+| Volatility target | Reduces exposure according to regime risk |
+
+The volatility-targeting rule gave the cleanest and most robust story. It preserved meaningful upside while reducing volatility and drawdowns. This is why it was selected for the main BTC-USD analysis.
 
 ## Project Structure
 
@@ -212,6 +274,7 @@ markov-market-regimes/
 |   |-- markov.py
 |   |-- backtest.py
 |   |-- plots.py
+|   |-- screen_assets.py
 |
 |-- figures/
 |   |-- regimes_over_time.png
@@ -255,7 +318,7 @@ pip install -r requirements.txt
 
 ## Running the Project
 
-First, download and save the price data:
+First, download and save the BTC-USD price data:
 
 ```bash
 python src/data.py
@@ -269,6 +332,12 @@ python src/regimes.py
 python src/markov.py
 python src/backtest.py
 python src/plots.py
+```
+
+To run the multi-asset and multi-rule screening:
+
+```bash
+python src/screen_assets.py
 ```
 
 Alternatively, run the full notebook:
@@ -294,7 +363,9 @@ This project is intentionally simple and interpretable. Natural extensions inclu
 * implementing Hidden Markov Models;
 * estimating regime-conditional expected returns and variances;
 * deriving allocation rules from a mean-variance or utility maximization problem;
-* adding more realistic transaction costs, slippage, and cash returns.
+* adding more realistic transaction costs, slippage, and cash returns;
+* extending the framework to multi-asset portfolio allocation;
+* calibrating the exposure rule to a fixed annual volatility target.
 
 ## Disclaimer
 
@@ -302,7 +373,7 @@ This project is for educational and research purposes only. It does not constitu
 
 ## Author
 
-**Arthus Goujon**
+**Arthus Goujon**  
 Mathematics & Economics student interested in quantitative finance, probability, financial markets, and applied modeling.
 
 Website: [arthusgoujon.xyz](https://arthusgoujon.xyz)

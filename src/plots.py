@@ -539,7 +539,7 @@ def generate_all_figures(
 if __name__ == "__main__":
     from data import load_price_data_from_csv, validate_price_data
 
-    prices = load_price_data_from_csv("data/spy_prices.csv")
+    prices = load_price_data_from_csv("data/btc_usd_prices.csv")
     validate_price_data(prices)
 
     features = build_feature_dataframe(

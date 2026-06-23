@@ -224,12 +224,21 @@ def validate_price_data(data: pd.DataFrame) -> None:
 
 
 if __name__ == "__main__":
-    prices = download_price_data(ticker="SPY", start="2010-01-01")
-    validate_price_data(prices)
+    ticker = "BTC-USD"
+    start = "2015-01-01"
+    output_path = "data/btc_usd_prices.csv"
 
-    save_price_data(prices, "data/spy_prices.csv")
+    prices = download_price_data(
+        ticker=ticker,
+        start=start,
+        end=None,
+    )
+
+    validate_price_data(prices)
+    save_price_data(prices, output_path)
 
     print(prices.head())
     print()
-    print(f"Downloaded {len(prices)} rows.")
+    print(f"Saved {ticker} prices to: {output_path}")
+    print(f"Number of observations: {len(prices)}")
     print(f"Date range: {prices.index.min().date()} to {prices.index.max().date()}")
